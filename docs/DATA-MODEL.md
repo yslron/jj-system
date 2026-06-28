@@ -113,7 +113,7 @@ One row per person being photographed. Walk-in customers **and** school students
 | Field | Type | Notes |
 |---|---|---|
 | `id` | UUID | |
-| `customerName` | string | |
+| `customer` | object | Structured identity (see below). |
 | `customerContact` | string \| null | Optional |
 | `packageId` | UUID → Package | |
 | `listPrice` | money | **Snapshot** of package price at sale time. |
@@ -126,6 +126,21 @@ One row per person being photographed. Walk-in customers **and** school students
 | `releasedAt` | timestamp \| null | |
 | `releasedBy` | string \| null | Staff who released. |
 | `notes` | string \| null | |
+
+### Customer identity (inline `customer` object on the Order)
+Structured so rosters sort/print as `Lastname, Firstname M.I.`.
+`course` and `batchYear` apply to **school orders only**; they stay null for walk-ins.
+
+| Field | Type | Notes |
+|---|---|---|
+| `lastName` | string | Required. Primary sort key for rosters. |
+| `firstName` | string | Required. |
+| `middleInitial` | string \| null | Single letter (e.g. "D"). Optional. |
+| `course` | string \| null | School only (e.g. "BSIT"). |
+| `batchYear` | string \| null | School only (e.g. "2026"). May default from `SchoolBatch`. |
+
+> **Display helper:** `"{lastName}, {firstName} {middleInitial}."` —
+> middle initial omitted when null. Walk-in customers just fill last/first.
 
 ### Discount snapshot (inline on the Order)
 Copied at apply-time so later Settings edits don't rewrite history.
