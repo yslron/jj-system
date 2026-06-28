@@ -1,0 +1,178 @@
+// JJ — Photography Module schema (DBML)
+// Import into drawDB (drawdb.app -> Import -> DBML) to visualize the ERD.
+// Mirrors docs/DATABASE.md. Money is INTEGER centavos.
+
+Table packages {
+  id           varchar [pk]
+  name         varchar [not null]
+  service_type varchar [not null, note: 'family|solo|portraits|school']
+  list_price   int     [not null, note: 'centavos']
+  active       int     [not null, default: 1]
+  notes        varchar
+  created_at   varchar [not null]
+  updated_at   varchar [not null]
+  deleted_at   varchar
+}
+
+Table discounts {
+  id          varchar [pk]
+  name        varchar [not null]
+  kind        varchar [not null, note: 'percentage|fixed']
+  value       int     [not null, note: 'percent OR centavos']
+  requires_id int     [not null, default: 0]
+  active      int     [not null, default: 1]
+  created_at  varchar [not null]
+  updated_at  varchar [not null]
+  deleted_at  varchar
+}
+
+Table settings {
+  key        varchar [pk]
+  value      varchar [not null]
+  updated_at varchar [not null]
+}
+
+Table users {
+  id         varchar [pk]
+  name       varchar [not null]
+  role       varchar [not null, note: 'staff|admin']
+  pin_hash   varchar [not null]
+  active     int     [not null, default: 1]
+  created_at varchar [not null]
+  updated_at varchar [not null]
+  deleted_at varchar
+}
+
+Table schools {
+  id             varchar [pk]
+  name           varchar [not null]
+  contact_person varchar
+  contact_info   varchar
+  notes          varchar
+  created_at     varchar [not null]
+  updated_at     varchar [not null]
+  deleted_at     varchar
+}
+
+Table school_batches {
+  id                    varchar [pk]
+  school_id             varchar [not null, ref: > schools.id]
+  label                 varchar [not null]
+  event_date            varchar
+  arrangement           varchar [not null, note: 'school_pays|students_pay']
+  agreed_amount         int     [note: 'centavos']
+  production_status     varchar [not null, default: 'to_photoshoot']
+  release_mode          varchar [not null, default: 'batch', note: 'batch|per_student']
+  release_override      int     [not null, default: 0]
+  release_override_note varchar
+  created_at            varchar [not null]
+  updated_at            varchar [not null]
+  deleted_at            varchar
+}
+
+Table orders {
+  id                  varchar [pk]
+  package_id          varchar [not null, ref: > packages.id]
+  school_batch_id     varchar [ref: > school_batches.id, note: 'null = walk-in']
+  coverage_type       varchar [not null, note: 'self_pay|school_covered|sponsored']
+
+  cust_last_name      varchar [not null]
+  cust_first_name     varchar [not null]
+  cust_middle_initial varchar
+  cust_course         varchar [note: 'school only']
+  cust_section        varchar [note: 'school only']
+  cust_batch_year     varchar [note: 'school only']
+  cust_contact        varchar
+
+  list_price          int     [not null, note: 'centavos snapshot']
+
+  discount_id         varchar [ref: > discounts.id]
+  discount_name       varchar
+  discount_kind       varchar
+  discount_value      int
+  discount_amount     int     [note: 'centavos']
+  discount_id_number  varchar
+  discount_id_name    varchar
+  discount_applied_by varchar
+
+  production_status   varchar [not null, default: 'to_shoot', note: 'to_shoot|shot|in_storage|released']
+  released_at         varchar
+  released_by         varchar
+
+  notes               varchar
+  created_at          varchar [not null]
+  updated_at          varchar [not null]
+  deleted_at          varchar
+
+  Indexes {
+    school_batch_id
+    (cust_last_name, cust_first_name)
+    production_status
+  }
+}
+
+Table contributions {
+  id              varchar [pk]
+  order_id        varchar [ref: > orders.id, note: 'XOR batch']
+  school_batch_id varchar [ref: > school_batches.id, note: 'XOR order']
+  source          varchar [not null, note: 'cash|gcash|school|sponsorship']
+  amount          int     [not null, note: 'centavos']
+  recorded_by     varchar [not null]
+  note            varchar
+  created_at      varchar [not null]
+  updated_at      varchar [not null]
+  deleted_at      varchar
+
+  Indexes {
+    order_id
+    school_batch_id
+    source
+  }
+}
+
+Table queue_tickets {
+  id            varchar [pk]
+  order_id      varchar [not null, ref: > orders.id]
+  business_date varchar [not null]
+  number        varchar [not null, note: 'e.g. A-014']
+  purpose       varchar [not null, default: 'shoot', note: 'shoot|pickup']
+  lane          varchar [note: 'future: per booth / studio vs school']
+  status        varchar [not null, default: 'waiting', note: 'waiting|called|serving|done|skipped']
+  called_at     varchar
+  served_by     varchar
+  created_at    varchar [not null]
+  updated_at    varchar [not null]
+  deleted_at    varchar
+
+  Indexes {
+    (business_date, status)
+  }
+}
+
+Table queue_counters {
+  business_date varchar [not null]
+  lane          varchar [not null, default: 'main']
+  last_number   int     [not null, default: 0]
+
+  Indexes {
+    (business_date, lane) [pk]
+  }
+}
+
+Table event_log {
+  id             varchar [pk]
+  seq            int     [note: 'local monotonic order']
+  type           varchar [not null]
+  aggregate_type varchar [not null]
+  aggregate_id   varchar [not null]
+  occurred_at    varchar [not null]
+  actor          varchar
+  payload        varchar [not null, note: 'JSON']
+  version        int     [not null, default: 1]
+  synced         int     [not null, default: 0]
+
+  Indexes {
+    (aggregate_type, aggregate_id)
+    (synced, seq)
+  }
+}
