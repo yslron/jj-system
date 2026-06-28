@@ -113,8 +113,7 @@ One row per person being photographed. Walk-in customers **and** school students
 | Field | Type | Notes |
 |---|---|---|
 | `id` | UUID | |
-| `customer` | object | Structured identity (see below). |
-| `customerContact` | string \| null | Optional |
+| `customer` | object | Structured identity + contact (see below). |
 | `packageId` | UUID → Package | |
 | `listPrice` | money | **Snapshot** of package price at sale time. |
 | `coverageType` | enum | `self_pay` \| `school_covered` \| `sponsored` |
@@ -137,7 +136,9 @@ Structured so rosters sort/print as `Lastname, Firstname M.I.`.
 | `firstName` | string | Required. |
 | `middleInitial` | string \| null | Single letter (e.g. "D"). Optional. |
 | `course` | string \| null | School only (e.g. "BSIT"). |
+| `section` | string \| null | School only (e.g. "4-A"). |
 | `batchYear` | string \| null | School only (e.g. "2026"). May default from `SchoolBatch`. |
+| `contact` | string \| null | Phone / email. Optional. For pickup/release notice. |
 
 > **Display helper:** `"{lastName}, {firstName} {middleInitial}."` —
 > middle initial omitted when null. Walk-in customers just fill last/first.
